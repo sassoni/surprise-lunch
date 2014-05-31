@@ -3,19 +3,98 @@
 <html>
     <head>
         <title>Surprise lunch</title>
+        
+        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     </head>
     
     <body>
-        <form method="post">
-            <label>
-                <div>latitude</div>
-                <input type="text" name="lat">
-            </label>
-            <label>
-                <div>longitude</div>
-                <input type="text" name="lon">
-            </label>
-            <input type="submit" value="Submit">
-        </form>
+        <p id="demo">Click the button to get your coordinates:</p>
+        <p id="restaurant_name"></p>
+        <button onclick="getLocation()">Get my location</button>
+        <button onclick="choose_random_restaurant()">Chose next</button>
+        <script>
+            var x = document.getElementById("demo");
+            var res_name = document.getElementById("restaurant_name");
+            var current_restaurants = {}
+            
+            function getLocation() {
+                x.innerHTML="getting location";
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(sendLocation);
+                } else {
+                    x.innerHTML="Geolocation is not supported by this browser.";
+                }
+            }
+            
+            function choose_random_restaurant_index() {
+                if (current_restaurants.length != 0) {
+                    // choose a random value
+                    return Math.floor((Math.random() * current_restaurants.length));                   
+                } else {
+                    return -1;
+                }
+            }
+            
+            function show_restaurant(restaurant) {
+                res_name.innerHTML = restaurant.name
+                console.debug('Restaurant chosen: ', restaurant); 
+            }
+            
+            function choose_random_restaurant() {
+                console.debug('restaurants before', current_restaurants);
+                
+                var index_chosen = choose_random_restaurant_index();
+                
+                console.debug('random index', index_chosen);    
+                
+                if (index_chosen != -1) {
+                    // show the restaurant
+                    show_restaurant(current_restaurants[index_chosen]);
+                    // delete it
+                    current_restaurants.splice(index_chosen, 1);
+                } else {
+                    // show no restaurants left
+                    res_name.innerHTML = "Sorry, no restauarants left"
+                    console.debug('restaurants', 'No restaurants left');
+                }
+                console.debug('restaurants after', current_restaurants);
+            }
+            
+            function on_request_success(response) {
+                //console.debug('response', response); 
+                x.innerHTML=response.total  
+                x.innerHTML = response.businesses[0].name
+                current_restaurants = response.businesses
+                //response.businesses.splice(0,1);
+                //console.debug('restaurants', response.businesses); 
+                choose_random_restaurant()
+            } 
+            
+            function on_request_error(r, text_status, error_thrown) {
+                //console.debug('error'); 
+                console.debug('error', text_status + ", " + error_thrown + ":\n" + r.responseText);
+            }
+            
+            function sendLocation(position) {     
+                var location = {}
+                location['latitude'] = position.coords.latitude
+                location['longitude'] = position.coords.longitude
+                
+                $.ajax({
+                    url: '/location',
+                    type: 'POST',
+                    data: JSON.stringify(location),
+                    contentType: 'application/json',
+                    success: on_request_success,
+                    error: on_request_error  
+                });
+  
+                x.innerHTML="Latitude: " + position.coords.latitude + 
+                "<br>Longitude: " + position.coords.longitude;	
+            }
+           
+        </script>
+        
     </body>
 </html>
