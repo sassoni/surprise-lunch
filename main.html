@@ -8,22 +8,18 @@
     </head>
     
     <body>
-        <p id="demo">Click the button to get your coordinates:</p>
         <p id="restaurant_name"></p>
         <button onclick="getLocation()">Get my location</button>
-        <button onclick="choose_random_restaurant()">Chose next</button>
+        <button id="choose_next_btn" style="display:none" onclick="choose_random_restaurant()">Chose next</button>
         <script>
-            var x = document.getElementById("demo");
             var res_name = document.getElementById("restaurant_name");
             var current_restaurants = {}
             
             function getLocation() {
-                x.innerHTML="getting location";
-                
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(sendLocation);
                 } else {
-                    x.innerHTML="Geolocation is not supported by this browser.";
+                    //x.innerHTML="Geolocation is not supported by this browser.";
                 }
             }
             
@@ -57,14 +53,14 @@
                     // show no restaurants left
                     res_name.innerHTML = "Sorry, no restauarants left"
                     console.debug('restaurants', 'No restaurants left');
+                    document.getElementById("choose_next_btn").style.display = "none";
                 }
                 console.debug('restaurants after', current_restaurants);
             }
             
             function on_request_success(response) {
                 //console.debug('response', response); 
-                x.innerHTML=response.total  
-                x.innerHTML = response.businesses[0].name
+                document.getElementById("choose_next_btn").style.display = "block";
                 current_restaurants = response.businesses
                 //response.businesses.splice(0,1);
                 //console.debug('restaurants', response.businesses); 
@@ -90,8 +86,8 @@
                     error: on_request_error  
                 });
   
-                x.innerHTML="Latitude: " + position.coords.latitude + 
-                "<br>Longitude: " + position.coords.longitude;	
+                //x.innerHTML="Latitude: " + position.coords.latitude + 
+                //"<br>Longitude: " + position.coords.longitude;	
             }
            
         </script>
