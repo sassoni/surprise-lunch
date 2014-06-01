@@ -3,23 +3,53 @@
 <html>
     <head>
         <title>Surprise lunch</title>
-        
         <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"  type="text/css"/>
+        <script src="bootstrap/js/bootstrap.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <style>
+            .container-fluid {
+            padding:0;
+            }
+            .navbar {
+            margin:0;
+            padding:15px 0 15px 0;
+            }
+            .btn {
+            margin:60px;                   
+            }
+            span.glyphicon {
+            font-size: 3.0em;
+            }
+        </style>
     </head>
     
     <body>
-        <p id="restaurant_name"></p>
-        <button onclick="getLocation()">Get my location</button>
-        <button id="choose_next_btn" style="display:none" onclick="choose_random_restaurant()">Chose next</button>
+        <div class="container-fluid">
+            <div class="navbar navbar-default">
+                <h1 class="text-center">Surprise Lunch</h1>
+            </div>
+        
+
+        <div class="container text-center">
+        <button style="width:200px height: 200px" type="button" class="btn btn-default btn-lg" onclick="getLocation()"> <span class="glyphicon glyphicon-map-marker"></span></button>
+        <h2 id="restaurant_name"></h2>
+        <h4 id="restaurant_kind"></h4>
+        <button id="choose_next_btn" type="button" class="btn btn-default btn-lg" style="display:none" onclick="choose_random_restaurant()">Nope!</button>
+	    </div>
+
+        
+
         <script>
             var res_name = document.getElementById("restaurant_name");
+            var res_kind = document.getElementById("restaurant_kind");
             var current_restaurants = {}
             
             function getLocation() {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(sendLocation);
                 } else {
-                    //x.innerHTML="Geolocation is not supported by this browser.";
+                    x.res_name = "Geolocation is not supported by this browser.";
                 }
             }
             
@@ -34,6 +64,15 @@
             
             function show_restaurant(restaurant) {
                 res_name.innerHTML = restaurant.name
+                 
+                var all_categories = ""; 
+
+                console.debug('categories: ', restaurant.categories);
+                var all_categories = [];
+                for (var i = 0; i < restaurant.categories.length; i++) { 
+                    all_categories.push(restaurant.categories[i][0]);
+                }              
+                res_kind.innerHTML = all_categories.join(", ");
                 console.debug('Restaurant chosen: ', restaurant); 
             }
             
@@ -51,8 +90,8 @@
                     current_restaurants.splice(index_chosen, 1);
                 } else {
                     // show no restaurants left
-                    res_name.innerHTML = "Sorry, no restauarants left"
-                    console.debug('restaurants', 'No restaurants left');
+                    res_name.innerHTML = "Sorry, no restaurants left :("
+                    res_kind.innerHTML = "";
                     document.getElementById("choose_next_btn").style.display = "none";
                 }
                 console.debug('restaurants after', current_restaurants);
@@ -60,7 +99,7 @@
             
             function on_request_success(response) {
                 //console.debug('response', response); 
-                document.getElementById("choose_next_btn").style.display = "block";
+                document.getElementById("choose_next_btn").style.display = "inline";
                 current_restaurants = response.businesses
                 //response.businesses.splice(0,1);
                 //console.debug('restaurants', response.businesses); 
@@ -91,6 +130,6 @@
             }
            
         </script>
-        
+        </div>
     </body>
 </html>
