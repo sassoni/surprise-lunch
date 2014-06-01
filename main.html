@@ -3,10 +3,11 @@
 <html>
     <head>
         <title>Surprise lunch</title>
-        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
         <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"  type="text/css"/>
         <link rel="stylesheet" href="bootstrap/css/custom-styles.css"  type="text/css"/>
+        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
         <script src="bootstrap/js/bootstrap.js"></script>
+        <script src="bootstrap/js/all_js.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     </head>
     
@@ -16,116 +17,103 @@
                 <h1 class="text-center">Surprise Lunch</h1>
                 <p class="text-warning">Click the map icon to see a random restaurant near you.</p>
             </div>
-        
-
-        <div class="container text-center">
-            <button style="width:200px height: 200px" type="button" class="btn btn-default btn-lg" onclick="getLocation()"> <span class="glyphicon glyphicon-map-marker"></span></button>
-            <h2 id="restaurant_name"></h2>
-            <h4 id="restaurant_kind"></h4>
-            <div class="btn-group">
-                <button id="yes_btn" type="button" class="btn btn-success btn_fixed_size" style="display:none" onclick="show_restaurant_address()">Yes!<br>Show address</button>
-                <button id="choose_next_btn" type="button" class="btn btn-warning btn_fixed_size" style="display:none" onclick="choose_random_restaurant()">Nope!<br>Show next</button>
+            <div class="container text-center">
+                <button style="width:200px height: 200px" type="button" class="btn btn-default btn-lg" onclick="getLocation()"> <span class="glyphicon glyphicon-map-marker"></span></button>
+                <h2 id="restaurant_name"></h2>
+                <h4 id="restaurant_kind"></h4>
+                <div class="btn-group">
+                    <button id="yes_btn" type="button" class="btn btn-success btn_fixed_size" style="display:none" onclick="show_restaurant_address()">Yes!<br>Show address</button>
+                    <button id="no_btn" type="button" class="btn btn-warning btn_fixed_size" style="display:none" onclick="choose_random_restaurant()">Nope!<br>Show next</button>
+                </div>
+                <h4 id="restaurant_address"></h4>
             </div>
-            <h4 id="restaurant_address"></h4>
         </div>
-
-        <script>
-            var res_name = document.getElementById("restaurant_name");
-            var res_kind = document.getElementById("restaurant_kind");
-            var res_address = document.getElementById("restaurant_address");
+    
+    <script>
+        var res_name = document.getElementById("restaurant_name");
+        var res_kind = document.getElementById("restaurant_kind");
+        var res_address = document.getElementById("restaurant_address");
             
-            var current_restaurants = {}
-            var current_restaurant = {}
-            
-            function getLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(sendLocation);
-                } else {
-                    x.res_name = "Geolocation is not supported by this browser.";
-                }
+        var current_restaurant = {}    
+        var restaurants_list = {}
+        
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation);
+            } else {
+                res_name.innerHTML = "Geolocation is not supported by this browser.";
             }
-            
-            function choose_random_restaurant_index() {
-                if (current_restaurants.length != 0) {
-                    // choose a random value
-                    return Math.floor((Math.random() * current_restaurants.length));                   
-                } else {
-                    return -1;
-                }
-            }
-            
-            function show_restaurant_address() {
-                res_address.innerHTML = current_restaurant.location.display_address;
-            }
-            
-            function hide_restaurant_address() {
-                res_address.innerHTML = "";
-            }
-            
-            function show_restaurant(restaurant) {
-                var all_categories = [];
-                for (var i = 0; i < restaurant.categories.length; i++) { 
-                    all_categories.push(restaurant.categories[i][0]);
-                }  
+        }
+        
+        function sendLocation(position) {     
+            var location = {}
+            location['latitude'] = position.coords.latitude
+            location['longitude'] = position.coords.longitude
                 
-                res_name.innerHTML = restaurant.name
-                res_kind.innerHTML = all_categories.join(", ");
-            }
+            $.ajax({
+               url: '/location',
+                type: 'POST',
+                data: JSON.stringify(location),
+                contentType: 'application/json',
+                success: on_request_success,
+                error: on_request_error  
+            });	
+        }
+        
+        function choose_random_restaurant() { 
+            hide_restaurant_address();
+            var index_chosen = choose_random_restaurant_index();    
             
-            function choose_random_restaurant() { 
-                hide_restaurant_address();
-                var index_chosen = choose_random_restaurant_index();    
-                
-                if (index_chosen != -1) {
-                    // show the restaurant
-                    current_restaurant = current_restaurants[index_chosen]
-                    show_restaurant(current_restaurant);
-                    // delete it
-                    current_restaurants.splice(index_chosen, 1);
-                } else {
-                    current_restaurant = {}
-                    // show no restaurants left
-                    res_name.innerHTML = "Sorry, no restaurants left :("
-                    res_kind.innerHTML = "";
-                    document.getElementById("choose_next_btn").style.display = "none";
-                    document.getElementById("yes_btn").style.display = "none";
-                }
+            if (index_chosen != -1) {
+                current_restaurant = restaurants_list[index_chosen]
+                show_restaurant();
+                restaurants_list.splice(index_chosen, 1);
+            } else {
+                current_restaurant = {}
+                res_name.innerHTML = "Sorry, no restaurants left :("
+                res_kind.innerHTML = "";
+                document.getElementById("no_btn").style.display = "none";
+                document.getElementById("yes_btn").style.display = "none";
             }
+        }
+        
+        function show_restaurant() {
+            var all_categories = [];
+            for (var i = 0; i < current_restaurant.categories.length; i++) { 
+                all_categories.push(current_restaurant.categories[i][0]);
+            }  
             
-            function on_request_success(response) {
-                //console.debug('response', response); 
-                document.getElementById("choose_next_btn").style.display = "inline";
-                document.getElementById("yes_btn").style.display = "inline";
-                current_restaurants = response.businesses
-                //response.businesses.splice(0,1);
-                //console.debug('restaurants', response.businesses); 
-                choose_random_restaurant()
-            } 
-            
-            function on_request_error(r, text_status, error_thrown) {
-                //console.debug('error'); 
-                console.debug('error', text_status + ", " + error_thrown + ":\n" + r.responseText);
+            res_name.innerHTML = current_restaurant.name
+            res_kind.innerHTML = all_categories.join(", ");
+        }
+        
+        function choose_random_restaurant_index() {
+            if (restaurants_list.length != 0) {
+                return Math.floor((Math.random() * restaurants_list.length));                   
+            } else {
+                return -1;
             }
+        }
+        
+        function show_restaurant_address() {
+            res_address.innerHTML = current_restaurant.location.display_address;
+        }
+        
+        function hide_restaurant_address() {
+            res_address.innerHTML = "";
+        }
             
-            function sendLocation(position) {     
-                var location = {}
-                location['latitude'] = position.coords.latitude
-                location['longitude'] = position.coords.longitude
-                
-                $.ajax({
-                    url: '/location',
-                    type: 'POST',
-                    data: JSON.stringify(location),
-                    contentType: 'application/json',
-                    success: on_request_success,
-                    error: on_request_error  
-                });
-  
-                //x.innerHTML="Latitude: " + position.coords.latitude + 
-                //"<br>Longitude: " + position.coords.longitude;	
-            }
-           
-        </script>
-        </div>
+        function on_request_success(response) {
+            document.getElementById("no_btn").style.display = "inline";
+            document.getElementById("yes_btn").style.display = "inline";
+            restaurants_list = response.businesses
+            choose_random_restaurant()
+        } 
+            
+        function on_request_error(r, text_status, error_thrown) {
+            console.debug('error', text_status + ", " + error_thrown + ":\n" + r.responseText);
+        }
+    </script>
+    
     </body>
 </html>
