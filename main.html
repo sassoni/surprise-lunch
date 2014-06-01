@@ -51,7 +51,7 @@
             location['longitude'] = position.coords.longitude
                 
             $.ajax({
-               url: '/location',
+               url: '/',
                 type: 'POST',
                 data: JSON.stringify(location),
                 contentType: 'application/json',
@@ -106,7 +106,10 @@
         function on_request_success(response) {
             document.getElementById("no_btn").style.display = "inline";
             document.getElementById("yes_btn").style.display = "inline";
-            restaurants_list = response.businesses
+            
+            obj = JSON.parse(response);
+            restaurants_list = obj.businesses
+            console.debug('restaurants', restaurants_list)
             choose_random_restaurant()
         } 
             
