@@ -26,6 +26,7 @@
                     <button id="no_btn" type="button" class="btn btn-warning btn_fixed_size" style="display:none" onclick="choose_random_restaurant()">Nope!<br>Show next</button>
                 </div>
                 <h4 id="restaurant_address"></h4>
+                <img src="images/ajax-loader.gif" id="loading-indicator" style="display:none" />
             </div>
         </div>
     
@@ -39,7 +40,7 @@
         
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendLocation);
+                navigator.geolocation.getCurrentPosition(sendLocation, handle_error);
             } else {
                 res_name.innerHTML = "Geolocation is not supported by this browser.";
             }
@@ -58,6 +59,30 @@
                 success: on_request_success,
                 error: on_request_error  
             });	
+        }
+        
+        $(document).ajaxSend(function(event, request, settings) {
+            $('#loading-indicator').show();
+        });
+
+        $(document).ajaxComplete(function(event, request, settings) {
+            $('#loading-indicator').hide();
+        });
+        
+        function handle_error(err) {
+            if (err.code == 1) {
+                console.debug('PERMISSION_DENIED');
+                res_name.innerHTML = "Permission denied";
+            } else if (err.code == 2) {
+                console.debug('POSITION UNAVAILABLE');
+                res_name.innerHTML = "Position unavailable";
+            } else if (err.code == 3) {
+                console.debug('TIMEOUT');
+                res_name.innerHTML = "timeout";
+            } else {
+                console.debug('SOMETHING ELSE WENT WRONG GETTING GEOLOCATION');
+                res_name.innerHTML = "Something went wrong";
+            }
         }
         
         function choose_random_restaurant() { 
